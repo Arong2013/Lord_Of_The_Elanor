@@ -3,10 +3,10 @@ using System.Collections.Generic;
 public interface IMovementGrid
 {
     bool CanMove(IGridObject gridObject, Vector3Int newPos);
-    void UpdateGridPos(IGridObject gridObject, bool isOccupied);
+    void SetMovableValue(IGridObject gridObject, bool isOccupied);
 }
 
-public class MovementGrid : Grid<bool>
+public class MovementGrid : Grid<bool> , IMovementGrid
 {
     public MovementGrid(int width, int height) : base(width, height)
     {
@@ -21,7 +21,7 @@ public class MovementGrid : Grid<bool>
 
         foreach (var tileOffset in gridObject.SizeList)
         {
-            Vector3Int targetTile = newPosition + new Vector3Int(tileOffset.x, tileOffset.y, 0);
+            Vector3Int targetTile = newPosition + new Vector3Int(tileOffset.x, 0, tileOffset.y);
             if (!GetValue(targetTile))
             {
                 canMove = false;
@@ -36,7 +36,7 @@ public class MovementGrid : Grid<bool>
     {
         foreach (var tileOffset in gridObject.SizeList)
         {
-            Vector3Int currentTile = gridObject.Pos + new Vector3Int(tileOffset.x, tileOffset.y, 0);
+            Vector3Int currentTile = gridObject.Pos + new Vector3Int(tileOffset.x, 0, tileOffset.y);
             SetValue(currentTile, isOccupied);
         }
     }

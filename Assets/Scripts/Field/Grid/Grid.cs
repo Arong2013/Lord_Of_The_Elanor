@@ -9,11 +9,11 @@ public interface IGridObject
 public class Grid<T>
 {
     public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
-    public class OnGridValueChangedEventArgs : EventArgs { public int X; public int Y; }
+    public class OnGridValueChangedEventArgs : EventArgs { public int X; public int Z; }
 
-    private readonly int width;
-    private readonly int height;
-    private readonly T[,] gridArray;
+     readonly int width;
+     readonly int height;
+    protected readonly T[,] gridArray;
 
     public Grid(int width, int height)
     {
@@ -30,17 +30,17 @@ public class Grid<T>
         y = Mathf.FloorToInt(worldPosition.y);
     }
 
-    public void SetValue(int x, int y, T value)
+    public void SetValue(int x, int z, T value)
     {
-        if (IsWithinBounds(x, y))
+        if (IsWithinBounds(x, z))
         {
-            gridArray[x, y] = value;
-            OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs { X = x, Y = y });
+            gridArray[x, z] = value;
+            OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs { X = x, Z = z });
         }
     }
-    public void SetValue(Vector3Int gridPosition, T value) => SetValue(gridPosition.x, gridPosition.y, value);
+    public void SetValue(Vector3Int gridPosition, T value) => SetValue(gridPosition.x, gridPosition.z, value);
 
     public T GetValue(int x, int y) => IsWithinBounds(x, y) ? gridArray[x, y] : default;
 
-    public T GetValue(Vector3Int gridPosition) => GetValue(gridPosition.x, gridPosition.y);
+    public T GetValue(Vector3Int gridPosition) => GetValue(gridPosition.x, gridPosition.z);
 }

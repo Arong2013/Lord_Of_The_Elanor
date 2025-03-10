@@ -61,11 +61,11 @@ public static class Utils
     }
     public static Vector3Int ToVector3Int(Vector2 v2)
     {
-        return new Vector3Int(Mathf.FloorToInt(v2.x), Mathf.FloorToInt(v2.y), 0);
+        return new Vector3Int(Mathf.FloorToInt(v2.x), 0, Mathf.FloorToInt(v2.y));
     }
     public static Vector2Int ToVector2Int(Vector3 v3)
     {
-        return new Vector2Int(Mathf.FloorToInt(v3.x), Mathf.FloorToInt(v3.y));
+        return new Vector2Int(Mathf.FloorToInt(v3.x),Mathf.FloorToInt(v3.z));
     }
     public static Vector2Int ToVector2Int(Vector2 v2)
     {

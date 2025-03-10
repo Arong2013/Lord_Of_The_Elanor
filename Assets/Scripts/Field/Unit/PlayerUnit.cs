@@ -7,18 +7,29 @@ using UnityEngine.EventSystems;
 public class PlayerUnit : Unit, ISubject
 {
     List<IObserver> observers = new List<IObserver>();
-    public override void Init(IMovementGrid movementGrid)
+    IBehaviorNode behaviorNode;
+
+    public override void Init(IMovementGrid movementGrid,IAstarGrid astarGrid)
     {
-        base.Init(movementGrid);
+        base.Init(movementGrid, astarGrid);
         LinkUi();
     }
-    public void InputMove(Vector2Int _dir)
+    public void InputMove(Vector3Int _dir)
     {
-        var newPos = Pos + (Vector3Int)_dir;
-        if (CanMove(newPos))
-            ChangeState(new MoveState(this, newPos));
+        behaviorNode = new ChaseAction(this, _dir, false);
     }
-    void LinkUi() => Utils.SetPlayerMarcineOnUI().ForEach(x => x.Initialize(this));
+    public void FixedUpdate()
+    {
+        if(behaviorNode?.Execute() == BehaviorState.FAILURE)
+            behaviorNode = null;    
+        else
+            behaviorNode?.Execute(); 
+    }
+    void LinkUi()
+    {
+        Utils.GetUI<TouchMovementUI>().AddListener(InputMove);
+        Utils.SetPlayerMarcineOnUI().ForEach(x => x.Initialize(this));
+    } 
     public void RegisterObserver(IObserver observer) => observers.Add(observer);
     public void UnregisterObserver(IObserver observer) => observers.Remove(observer);
     public void NotifyObservers() => observers.ForEach(observer => observer.UpdateObserver());

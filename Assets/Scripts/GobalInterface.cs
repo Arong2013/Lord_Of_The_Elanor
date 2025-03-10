@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 public interface IIterator<T>
 {
     bool HasNext();
@@ -9,12 +10,6 @@ public interface IIterator<T>
 public interface IAggregate<T>
 {
     IIterator<T> CreateIterator();
-}
-public enum BehaviorState
-{
-    SUCCESS,
-    RUNNING,
-    FAILURE
 }
 public enum ObjectLayerMask
 {
@@ -43,4 +38,8 @@ public interface IHarvestable
     void StartHarvest();   // 갈무리 시작
     void EndHarvest();     // 갈무리 종료
     int GetHarvestReward(); // 갈무리로 얻는 보상 (예: 재료 수량)
+}
+public interface IController
+{
+    public Vector3Int TouchPos {  get;}  
 }

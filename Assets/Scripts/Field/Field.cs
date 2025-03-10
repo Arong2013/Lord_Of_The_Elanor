@@ -4,24 +4,30 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-public class Field : MonoBehaviour, IMovementGrid
+public class Field : MonoBehaviour
 {
    [SerializeField] PlayerUnit playerUnit;
 
     //TurnController turnController;
-    GridMarcine gridMarcine;
-
+    MovementGrid movementGrid;
+    AstarGrid astarGrid;
     [SerializeField] int width, height;
-
     private void Start()
     {
         Init();
     }
     public void Init()
     {
-        gridMarcine = new GridMarcine(width,height);
-        playerUnit.Init(this);
+        movementGrid = new MovementGrid(width, height);
+        astarGrid = new AstarGrid(width, height,movementGrid);
+
+
+
+        var list =  astarGrid.PathFinding(new Vector2Int(0, 0), new Vector2Int(20, 20), false);
+        foreach (var item in list)
+        {
+            Debug.Log(new Vector2(item.x,item.y));    
+        }
+        playerUnit.Init(movementGrid,astarGrid);
     }
-    public void UpdateGridPos(IGridObject gridObject, bool newValue) => gridMarcine.UpdateGridPos(gridObject, newValue);
-    public bool CanMove(IGridObject gridObject, Vector3Int newPos) => gridMarcine.CanMove(gridObject, newPos);
 }
