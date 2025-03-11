@@ -8,16 +8,13 @@ public abstract class FieldOBJ : MonoBehaviour, IGridObject
 
     IMovementGrid movementGrid;
     IAstarGrid astarGrid;
-
-    public bool IsMoving => Vector3.Distance(transform.position, Pos) <= 0.001f;
+    public bool IsMoving => transform.position != Pos;
     public virtual void Init(IMovementGrid movementGrid,IAstarGrid astarGrid)
     {
         this.movementGrid = movementGrid;
         this.astarGrid = astarGrid; 
         Pos = Utils.ToVector3Int(transform.position);
-        SizeList.Add(Vector2Int.zero);
-
-        movementGrid.SetMovableValue(this, false);
+  
     }
     public bool CanMove(Vector3Int newPos) => movementGrid.CanMove(this, newPos) && IsMoving;
     public void UpdatePos(Vector3Int newPos)

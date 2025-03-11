@@ -20,7 +20,7 @@ public interface ITurnState
 public class ChaseAction : IBehaviorNode
 {
     private readonly FieldOBJ fieldOBJ;
-    private readonly List<AstarNode> nodes;
+    private List<AstarNode> nodes;
     private int currentStep;
     private Vector3Int NextPos => new Vector3Int(nodes[currentStep].x, fieldOBJ.Pos.y, nodes[currentStep].y);
 
@@ -29,15 +29,21 @@ public class ChaseAction : IBehaviorNode
         this.fieldOBJ = fieldOBJ;
         currentStep = 1;
         nodes = fieldOBJ.GetAstarNodes(targetPos, isAllow);
+        Debug.Log(nodes.Count);
     }
 
     public BehaviorState Execute()
     {
-        if (nodes == null || currentStep > nodes.Count) return BehaviorState.FAILURE;
-
+        if (nodes == null || currentStep >= nodes.Count ) 
+        {
+            Debug.Log(currentStep);
+            return BehaviorState.FAILURE;
+        }
         if (IsMoveFinish())
         {
             currentStep++;
+            if(currentStep >= nodes.Count && !fieldOBJ.CanMove(NextPos))
+            nodes = null;
             return BehaviorState.SUCCESS;
         }
         fieldOBJ.Move(NextPos);

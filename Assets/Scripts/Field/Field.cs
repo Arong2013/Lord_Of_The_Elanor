@@ -7,6 +7,7 @@ using System.Linq;
 public class Field : MonoBehaviour
 {
    [SerializeField] PlayerUnit playerUnit;
+   [SerializeField] Block block;
 
     //TurnController turnController;
     MovementGrid movementGrid;
@@ -29,5 +30,6 @@ public class Field : MonoBehaviour
             Debug.Log(new Vector2(item.x,item.y));    
         }
         playerUnit.Init(movementGrid,astarGrid);
+        block.Init(movementGrid,astarGrid);
     }
 }
