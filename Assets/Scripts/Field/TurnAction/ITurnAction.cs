@@ -29,26 +29,22 @@ public class ChaseAction : IBehaviorNode
         this.fieldOBJ = fieldOBJ;
         currentStep = 1;
         nodes = fieldOBJ.GetAstarNodes(targetPos, isAllow);
-        Debug.Log(nodes.Count);
     }
 
     public BehaviorState Execute()
     {
         if (nodes == null || currentStep >= nodes.Count ) 
         {
-            Debug.Log(currentStep);
             return BehaviorState.FAILURE;
         }
-        if (IsMoveFinish())
+        if(fieldOBJ.IsMoveFinish(NextPos))
         {
             currentStep++;
-            if(currentStep >= nodes.Count && !fieldOBJ.CanMove(NextPos))
+            if(currentStep >= nodes.Count && !fieldOBJ.CanMoveToGrid(NextPos))
             nodes = null;
             return BehaviorState.SUCCESS;
         }
         fieldOBJ.Move(NextPos);
         return BehaviorState.SUCCESS;
     }
-
-    public bool IsMoveFinish() => !fieldOBJ.IsMoving && fieldOBJ.Pos == NextPos;
 }

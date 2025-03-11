@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public abstract class FieldOBJ : MonoBehaviour, IGridObject
@@ -14,23 +15,21 @@ public abstract class FieldOBJ : MonoBehaviour, IGridObject
         this.movementGrid = movementGrid;
         this.astarGrid = astarGrid; 
         Pos = Utils.ToVector3Int(transform.position);
-  
     }
-    public bool CanMove(Vector3Int newPos) => movementGrid.CanMove(this, newPos) && IsMoving;
+    public bool CanMoveToGrid(Vector3Int newPos) => movementGrid.CanMove(this, newPos);
+    public bool IsMoveFinish(Vector3Int newPos) => Pos == newPos && !IsMoving;
     public void UpdatePos(Vector3Int newPos)
     {
         movementGrid.SetMovableValue(this, true);
         Pos = newPos;
         movementGrid.SetMovableValue(this, false);
     }
-
     public void Move(Vector3Int newPos)
     {
         if (Pos != newPos)
             UpdatePos(newPos);
         transform.position = Vector3.MoveTowards(transform.position, newPos, 10 * Time.deltaTime);
     }
-
     public List<AstarNode>GetAstarNodes(Vector3 targetPos,bool isAllow)
     {
         return astarGrid.PathFinding(this, Utils.ToVector2Int(targetPos), isAllow);
