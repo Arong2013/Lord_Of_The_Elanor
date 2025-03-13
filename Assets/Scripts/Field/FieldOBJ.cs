@@ -2,36 +2,32 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-public abstract class FieldOBJ : MonoBehaviour, IGridObject
+public abstract class FieldOBJ : MonoBehaviour
 {
-    public Vector3Int Pos { get; protected set; }
-    public List<Vector2Int> SizeList { get; protected set; } = new List<Vector2Int>();
-
+    public Vector3Int Pos { get; private set; }
+    FieldMovement fieldMovement;
     IMovementGrid movementGrid;
     IAstarGrid astarGrid;
-    public bool IsMoving => transform.position != Pos;
+    
     public virtual void Init(IMovementGrid movementGrid,IAstarGrid astarGrid)
     {
         this.movementGrid = movementGrid;
         this.astarGrid = astarGrid; 
         Pos = Utils.ToVector3Int(transform.position);
+
+        fieldMovement = new FieldMovement(this,movementGrid);
     }
-    public bool CanMoveToGrid(Vector3Int newPos) => movementGrid.CanMove(this, newPos);
-    public bool IsMoveFinish(Vector3Int newPos) => Pos == newPos && !IsMoving;
-    public void UpdatePos(Vector3Int newPos)
+        public void UpdatePos(Vector3Int newPos)
     {
-        movementGrid.SetMovableValue(this, true);
-        Pos = newPos;
-        movementGrid.SetMovableValue(this, false);
+        if(Pos != newPos)
+        {
+            Pos = newPos;
+            movementGrid.SetPosToGrid(Pos,false);
+        }
     }
-    public void Move(Vector3Int newPos)
-    {
-        if (Pos != newPos)
-            UpdatePos(newPos);
-        transform.position = Vector3.MoveTowards(transform.position, newPos, 10 * Time.deltaTime);
-    }
-    public List<AstarNode>GetAstarNodes(Vector3 targetPos,bool isAllow)
-    {
-        return astarGrid.PathFinding(this, Utils.ToVector2Int(targetPos), isAllow);
-    }
+    public bool IsMoving => transform.position != Pos;
+    public bool CanMoveToGrid(Vector3Int newPos) => fieldMovement.CanMovetoPos(newPos);
+    public bool IsMoveFinish(Vector3Int newPos) => fieldMovement.IsMoveFinish(newPos);
+    public void Move(Vector3Int newPos) => fieldMovement.Move(newPos);
+    public List<AstarNode>GetAstarNodes(Vector3 targetPos,bool isAllow) => astarGrid.PathFinding(Utils.ToVector2Int(Pos),Utils.ToVector2Int(targetPos), isAllow);
 }

@@ -12,8 +12,7 @@ public class PlayerUnit : Unit, ISubject
     public override void Init(IMovementGrid movementGrid,IAstarGrid astarGrid)
     {
         base.Init(movementGrid, astarGrid);
-        SizeList.Add(Vector2Int.zero);
-        movementGrid.SetMovableValue(this, false);
+        movementGrid.SetPosToGrid(Pos,false);
         LinkUi();
     }
     public void InputMove(Vector3Int _dir)

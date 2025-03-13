@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 public interface IMovementGrid
 {
-    bool CanMove(IGridObject gridObject, Vector3Int newPos);
-    void SetMovableValue(IGridObject gridObject, bool isOccupied);
+    public bool CanMovetoPos(Vector3Int pos);
+    
+    public void SetPosToGrid(Vector3Int pos,bool value);
 }
 
 public class MovementGrid : Grid<bool> , IMovementGrid
@@ -14,30 +15,6 @@ public class MovementGrid : Grid<bool> , IMovementGrid
             for (int y = 0; y < height; y++)
                 SetValue(x, y, true);
     }
-    public bool CanMove(IGridObject gridObject, Vector3Int newPosition)
-    {
-        bool canMove = true;
-        SetMovableValue(gridObject, true);
-
-        foreach (var tileOffset in gridObject.SizeList)
-        {
-            Vector3Int targetTile = newPosition + new Vector3Int(tileOffset.x, 0, tileOffset.y);
-            if (!GetValue(targetTile))
-            {
-                canMove = false;
-                break;
-            }
-        }
-
-        SetMovableValue(gridObject, false);
-        return canMove;
-    }
-    public void SetMovableValue(IGridObject gridObject, bool isOccupied)
-    {
-        foreach (var tileOffset in gridObject.SizeList)
-        {
-            Vector3Int currentTile = gridObject.Pos + new Vector3Int(tileOffset.x, 0, tileOffset.y);
-            SetValue(currentTile, isOccupied);
-        }
-    }
+    public bool CanMovetoPos(Vector3Int pos) => GetValue(pos);
+    public void SetPosToGrid(Vector3Int pos,bool value) => SetValue(pos,value);
 }

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public interface IAstarGrid
-{
-    List<AstarNode> PathFinding(IGridObject gridObject, Vector2Int targetPos, bool allowDiagonal);
+{   
     List<AstarNode> PathFinding(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal);
 }
 
@@ -35,20 +34,14 @@ public class AstarGrid : IAstarGrid
             }
         }
     }
-
-    public List<AstarNode> PathFinding(IGridObject gridObject, Vector2Int targetPos, bool allowDiagonal)
-    {InitializeGrid();
-        return PathFindingWithSize(Utils.ToVector2Int(gridObject.Pos), targetPos, allowDiagonal, gridObject.SizeList);
-    }
-
     public List<AstarNode> PathFinding(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal)
-    {InitializeGrid();
-        return PathFindingWithSize(startPos, targetPos, allowDiagonal, new List<Vector2Int> { Vector2Int.zero });
+    {   InitializeGrid();
+        return PathFindingWithSize(startPos, targetPos, allowDiagonal);
     }
 
-    private List<AstarNode> PathFindingWithSize(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal, List<Vector2Int> sizeList)
+    private List<AstarNode> PathFindingWithSize(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal)
     {
-        if (!IsValidPosition(startPos) || !IsValidPosition(targetPos) || !CanMoveWithSize(targetPos, sizeList))
+        if (!IsValidPosition(startPos) || !IsValidPosition(targetPos))
         {
             Debug.LogWarning("Invalid start or target position.");
             return null;
@@ -75,10 +68,10 @@ public class AstarGrid : IAstarGrid
             }
             
 
-            foreach (var neighbor in GetNeighbors(curNode, allowDiagonal, sizeList))
+            foreach (var neighbor in GetNeighbors(curNode, allowDiagonal))
             {
                 
-                if (closedSet.Contains(neighbor) || !CanMoveWithSize(new Vector2Int(neighbor.x, neighbor.y), sizeList))
+                if (closedSet.Contains(neighbor))
                     continue;
 
                 int moveCost = curNode.G + GetMoveCost(curNode, neighbor);
@@ -103,22 +96,6 @@ public class AstarGrid : IAstarGrid
     private int GetHeuristic(AstarNode a, AstarNode b) => (Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y)) * 10;
 
     private int GetMoveCost(AstarNode from, AstarNode to) => (from.x == to.x || from.y == to.y) ? 10 : 14;
-
-private bool CanMoveWithSize(Vector2Int pos, List<Vector2Int> sizeList)
-{
-    foreach (var offset in sizeList)
-    {
-        int checkX = pos.x + offset.x;
-        int checkY = pos.y + offset.y;
-
-        if (!IsValidPosition(new Vector2Int(checkX, checkY)) || nodeArray[checkX, checkY].isWall)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
     private List<AstarNode> ConstructPath(AstarNode startNode, AstarNode targetNode)
     {
         var path = new List<AstarNode>();
@@ -135,7 +112,7 @@ private bool CanMoveWithSize(Vector2Int pos, List<Vector2Int> sizeList)
         return path;
     }
 
-    private List<AstarNode> GetNeighbors(AstarNode node, bool allowDiagonal, List<Vector2Int> sizeList)
+    private List<AstarNode> GetNeighbors(AstarNode node, bool allowDiagonal)
     {
         var neighbors = new List<AstarNode>();
         int[,] directions = allowDiagonal
@@ -147,7 +124,7 @@ private bool CanMoveWithSize(Vector2Int pos, List<Vector2Int> sizeList)
             int checkX = node.x + directions[i, 0];
             int checkY = node.y + directions[i, 1];
 
-            if (IsValidPosition(new Vector2Int(checkX, checkY)) && CanMoveWithSize(new Vector2Int(checkX, checkY), sizeList))
+            if (IsValidPosition(new Vector2Int(checkX, checkY)))
             {
                 neighbors.Add(nodeArray[checkX, checkY]);
             }

@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-public interface IGridObject
-{
-    Vector3Int Pos { get; }
-    List<Vector2Int> SizeList { get; }
-}
 public class Grid<T>
 {
     public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
