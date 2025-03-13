@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,22 +10,22 @@ public interface IAstarGrid
 
 public class AstarGrid : IAstarGrid
 {
-    readonly int width;
-    readonly int height;
-    private MovementGrid movementGrid;
-    private AstarNode[,] nodeArray;
-
+    private readonly int width;
+    private readonly int height;
+    private readonly MovementGrid movementGrid;
+    private readonly AstarNode[,] nodeArray;
+    
     public AstarGrid(int width, int height, MovementGrid movementGrid)
     {
-        this.movementGrid = movementGrid;
         this.width = width;
         this.height = height;
+        this.movementGrid = movementGrid;
+        nodeArray = new AstarNode[width, height];
         InitializeGrid();
     }
 
     private void InitializeGrid()
     {
-        nodeArray = new AstarNode[width, height];
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -38,78 +37,60 @@ public class AstarGrid : IAstarGrid
     }
 
     public List<AstarNode> PathFinding(IGridObject gridObject, Vector2Int targetPos, bool allowDiagonal)
-    {
-        var startPos = Utils.ToVector2Int(gridObject.Pos);
-        return PathFindingWithSize(startPos, targetPos, allowDiagonal, gridObject.SizeList);
+    {InitializeGrid();
+        return PathFindingWithSize(Utils.ToVector2Int(gridObject.Pos), targetPos, allowDiagonal, gridObject.SizeList);
     }
 
     public List<AstarNode> PathFinding(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal)
-    {
+    {InitializeGrid();
         return PathFindingWithSize(startPos, targetPos, allowDiagonal, new List<Vector2Int> { Vector2Int.zero });
     }
 
     private List<AstarNode> PathFindingWithSize(Vector2Int startPos, Vector2Int targetPos, bool allowDiagonal, List<Vector2Int> sizeList)
     {
-        InitializeGrid();
-
-        if (startPos.x < 0 || startPos.y < 0 || targetPos.x < 0 || targetPos.y < 0 ||
-            startPos.x >= width || startPos.y >= height || targetPos.x >= width || targetPos.y >= height)
+        if (!IsValidPosition(startPos) || !IsValidPosition(targetPos) || !CanMoveWithSize(targetPos, sizeList))
         {
-            Debug.LogWarning("Start or target position is out of bounds.");
-            return new List<AstarNode>();
+            Debug.LogWarning("Invalid start or target position.");
+            return null;
         }
 
-        AstarNode startNode = nodeArray[startPos.x, startPos.y];
-        AstarNode targetNode = nodeArray[targetPos.x, targetPos.y];
+        var startNode = nodeArray[startPos.x, startPos.y];
+        var targetNode = nodeArray[targetPos.x, targetPos.y];
 
-        if (!CanMoveWithSize(targetPos, sizeList))
-        {
-            Debug.LogWarning("Target position is not walkable.");
-            return new List<AstarNode>();
-        }
-
-        var openList = new List<AstarNode> { startNode };
+        var openList = new SortedSet<AstarNode>(new AstarNodeComparer()) { startNode };
         var closedSet = new HashSet<AstarNode>();
-        var finalNodeList = new List<AstarNode>();
+
+        startNode.G = 0;
+        startNode.H = GetHeuristic(startNode, targetNode);
 
         while (openList.Count > 0)
         {
-            var curNode = openList[0];
-            for (int i = 1; i < openList.Count; i++)
-            {
-                if (openList[i].F < curNode.F || (openList[i].F == curNode.F && openList[i].H < curNode.H))
-                {
-                    curNode = openList[i];
-                }
-            }
-
+            var curNode = openList.Min;
             openList.Remove(curNode);
             closedSet.Add(curNode);
 
             if (curNode == targetNode)
             {
-                AstarNode targetCurNode = targetNode;
-                while (targetCurNode != startNode)
-                {
-                    finalNodeList.Add(targetCurNode);
-                    targetCurNode = targetCurNode.ParentNode;
-                }
-                finalNodeList.Add(startNode);
-                finalNodeList.Reverse();
-                return finalNodeList;
+                return ConstructPath(startNode, targetNode);
             }
+            
 
-            OpenListAdd(curNode.x, curNode.y + 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-            OpenListAdd(curNode.x + 1, curNode.y, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-            OpenListAdd(curNode.x, curNode.y - 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-            OpenListAdd(curNode.x - 1, curNode.y, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-
-            if (allowDiagonal)
+            foreach (var neighbor in GetNeighbors(curNode, allowDiagonal, sizeList))
             {
-                OpenListAdd(curNode.x + 1, curNode.y + 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-                OpenListAdd(curNode.x - 1, curNode.y + 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-                OpenListAdd(curNode.x - 1, curNode.y - 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
-                OpenListAdd(curNode.x + 1, curNode.y - 1, openList, closedSet, curNode, targetNode, allowDiagonal, sizeList);
+                
+                if (closedSet.Contains(neighbor) || !CanMoveWithSize(new Vector2Int(neighbor.x, neighbor.y), sizeList))
+                    continue;
+
+                int moveCost = curNode.G + GetMoveCost(curNode, neighbor);
+                if (moveCost < neighbor.G || !openList.Contains(neighbor))
+                {
+                    neighbor.G = moveCost;
+                    neighbor.H = GetHeuristic(neighbor, targetNode);
+                    neighbor.ParentNode = curNode;
+
+                    if (!openList.Contains(neighbor))
+                        openList.Add(neighbor);
+                }
             }
         }
 
@@ -117,45 +98,75 @@ public class AstarGrid : IAstarGrid
         return new List<AstarNode>();
     }
 
-    private bool CanMoveWithSize(Vector2Int pos, List<Vector2Int> sizeList)
+    private bool IsValidPosition(Vector2Int pos) => pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
+
+    private int GetHeuristic(AstarNode a, AstarNode b) => (Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y)) * 10;
+
+    private int GetMoveCost(AstarNode from, AstarNode to) => (from.x == to.x || from.y == to.y) ? 10 : 14;
+
+private bool CanMoveWithSize(Vector2Int pos, List<Vector2Int> sizeList)
+{
+    foreach (var offset in sizeList)
     {
-        foreach (var offset in sizeList)
+        int checkX = pos.x + offset.x;
+        int checkY = pos.y + offset.y;
+
+        if (!IsValidPosition(new Vector2Int(checkX, checkY)) || nodeArray[checkX, checkY].isWall)
         {
-            int checkX = pos.x + offset.x;
-            int checkY = pos.y + offset.y;
-            if (checkX < 0 || checkX >= width || checkY < 0 || checkY >= height || nodeArray[checkX, checkY].isWall)
-                return false;
-        }
-        return true;
-    }
-
-    private void OpenListAdd(int checkX, int checkY, List<AstarNode> openList, HashSet<AstarNode> closedSet, AstarNode curNode, AstarNode targetNode, bool allowDiagonal, List<Vector2Int> sizeList)
-    {
-        if (checkX < 0 || checkX >= width || checkY < 0 || checkY >= height)
-            return;
-
-        if (!CanMoveWithSize(new Vector2Int(checkX, checkY), sizeList))
-            return;
-
-        AstarNode neighborNode = nodeArray[checkX, checkY];
-        if (closedSet.Contains(neighborNode))
-            return;
-
-        if (allowDiagonal)
-        {
-            if (nodeArray[curNode.x, checkY].isWall && nodeArray[checkX, curNode.y].isWall)
-                return;
-        }
-
-        int moveCost = curNode.G + (curNode.x == checkX || curNode.y == checkY ? 10 : 14);
-        if (moveCost < neighborNode.G || !openList.Contains(neighborNode))
-        {
-            neighborNode.G = moveCost;
-            neighborNode.H = (Mathf.Abs(neighborNode.x - targetNode.x) + Mathf.Abs(neighborNode.y - targetNode.y)) * 10;
-            neighborNode.ParentNode = curNode;
-
-            if (!openList.Contains(neighborNode))
-                openList.Add(neighborNode);
+            return false;
         }
     }
+    return true;
+}
+
+    private List<AstarNode> ConstructPath(AstarNode startNode, AstarNode targetNode)
+    {
+        var path = new List<AstarNode>();
+        var curNode = targetNode;
+
+        while (curNode != startNode)
+        {
+            path.Add(curNode);
+            curNode = curNode.ParentNode;
+        }
+
+        path.Add(startNode);
+        path.Reverse();
+        return path;
+    }
+
+    private List<AstarNode> GetNeighbors(AstarNode node, bool allowDiagonal, List<Vector2Int> sizeList)
+    {
+        var neighbors = new List<AstarNode>();
+        int[,] directions = allowDiagonal
+            ? new int[,] { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { 1, 1 }, { -1, 1 }, { -1, -1 }, { 1, -1 } }
+            : new int[,] { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
+
+        for (int i = 0; i < directions.GetLength(0); i++)
+        {
+            int checkX = node.x + directions[i, 0];
+            int checkY = node.y + directions[i, 1];
+
+            if (IsValidPosition(new Vector2Int(checkX, checkY)) && CanMoveWithSize(new Vector2Int(checkX, checkY), sizeList))
+            {
+                neighbors.Add(nodeArray[checkX, checkY]);
+            }
+        }
+
+        return neighbors;
+    }
+
+private class AstarNodeComparer : IComparer<AstarNode>
+{
+    public int Compare(AstarNode a, AstarNode b)
+    {
+        int compare = a.F.CompareTo(b.F);
+        if (compare == 0)
+        {
+            compare = a.y.CompareTo(b.y); 
+        }
+        return compare;
+    }
+}
+
 }

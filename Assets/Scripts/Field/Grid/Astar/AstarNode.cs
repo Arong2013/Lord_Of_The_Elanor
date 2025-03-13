@@ -5,8 +5,6 @@ public class AstarNode
 
     public bool isWall;
     public AstarNode ParentNode;
-
-
     public int x, y, G, H;
     public int F { get { return G + H; } }
 }

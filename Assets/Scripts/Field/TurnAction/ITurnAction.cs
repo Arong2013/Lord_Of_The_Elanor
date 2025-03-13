@@ -29,6 +29,7 @@ public class ChaseAction : IBehaviorNode
         this.fieldOBJ = fieldOBJ;
         currentStep = 1;
         nodes = fieldOBJ.GetAstarNodes(targetPos, isAllow);
+         Debug.Log(nodes?.Count);
     }
 
     public BehaviorState Execute()
@@ -40,8 +41,8 @@ public class ChaseAction : IBehaviorNode
         if(fieldOBJ.IsMoveFinish(NextPos))
         {
             currentStep++;
-            if(currentStep >= nodes.Count && !fieldOBJ.CanMoveToGrid(NextPos))
-            nodes = null;
+            if(currentStep > nodes.Count && !fieldOBJ.CanMoveToGrid(NextPos))
+                nodes = null;
             return BehaviorState.SUCCESS;
         }
         fieldOBJ.Move(NextPos);
