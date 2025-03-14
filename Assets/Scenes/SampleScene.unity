@@ -705,6 +705,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc17b1d7c9f019d4cafb0d48ced97e64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cubePrefab: {fileID: 6354036822204186053, guid: 08062d7d865f4584cb8a770be064c1b5, type: 3}
 --- !u!4 &1207998588
 Transform:
   m_ObjectHideFlags: 0
